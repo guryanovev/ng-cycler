@@ -1,0 +1,32 @@
+{
+  "name": "ng-cycler",
+  "version": "0.1.2",
+  "description": "A tiny Angular lifecycle helper library",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guryanovev/ng-cycler.git"
+  },
+  "keywords": [
+    "angular",
+    "init",
+    "dispose"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/guryanovev/ng-cycler/issues"
+  },
+  "homepage": "https://github.com/guryanovev/ng-cycler#readme",
+  "peerDependencies": {
+    "@angular/core": "6-15"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5",
+    "@angular/core": "15"
+  }
+}
