@@ -1,12 +1,12 @@
 {
   "name": "ng-cycler",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A tiny Angular lifecycle helper library",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -27,7 +27,10 @@
     "@angular/core": "6-15"
   },
   "devDependencies": {
-    "typescript": "^4.9.5",
-    "@angular/core": "15"
+    "@angular/core": "15",
+    "@types/jest": "^29.4.0",
+    "jest": "^29.4.2",
+    "ts-jest": "^29.0.5",
+    "typescript": "^4.9.5"
   }
 }
