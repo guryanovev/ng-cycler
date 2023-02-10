@@ -1,6 +1,6 @@
 {
   "name": "ng-cycler",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "A tiny Angular lifecycle helper library",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
