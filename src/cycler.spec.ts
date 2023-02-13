@@ -1,6 +1,6 @@
 import { Cycler } from './cycler';
 import { Destructor } from './destructor.type';
-import { Subscription } from 'rxjs';
+import { Subscription, Observable, Subscriber } from 'rxjs';
 
 const NOOP: Destructor = () => {};
 
@@ -217,6 +217,99 @@ describe('cycler', () => {
             );
 
             expect(c.getDestructorsCount()).toBe(3);
+        });
+    });
+
+    describe('manageTransient', () => {
+        it('should put first destructor to queue', () => {
+            const c = new Cycler();
+
+            c.manageTransient('request1', NOOP);
+
+            expect(c.getDestructorsCount()).toBe(1);
+        });
+
+        it('should not put second destructor to queue', () => {
+            const c = new Cycler();
+
+            c.manageTransient('request1', NOOP);
+            c.manageTransient('request1', { dispose() {} });
+
+            expect(c.getDestructorsCount()).toBe(1);
+        });
+
+        it('should finalize on dispose', () => {
+            const c = new Cycler();
+
+            const mockCallback = jest.fn();
+
+            c.manageTransient('request1', mockCallback);
+            c.dispose();
+
+            expect(mockCallback.mock.calls).toHaveLength(1);
+        });
+
+        it('should finalize first before second', () => {
+            const c = new Cycler();
+
+            const mockCallback = jest.fn();
+
+            c.manageTransient('request1', mockCallback);
+            c.manageTransient('request1', () => {});
+
+            expect(mockCallback.mock.calls).toHaveLength(1);
+        });
+    });
+
+    describe('managedSubscribe', () => {
+        it('should accept observable and handler', () => {
+            const c = new Cycler();
+            const observable = new Observable<number>(subscriber => {
+                subscriber.next(2023);
+            });
+
+            const next = jest.fn();
+            c.managedSubscribe(observable, next);
+
+            expect(next).toBeCalledTimes(1);
+            expect(next).toBeCalledWith(2023);
+        });
+
+        it('should keep destructor while observable not complete', () => {
+            const c = new Cycler();
+
+            const observable = new Observable<number>(subscriber => {
+                subscriber.next(1);
+            });
+
+            c.managedSubscribe(observable, _ => {});
+            expect(c.getDestructorsCount()).toBe(1);
+        });
+
+        it('should remove destructor once observable is complete', () => {
+            const c = new Cycler();
+
+            let outSubscriber: Subscriber<number> | null = null;
+            const observable = new Observable<number>(subscriber => {
+                outSubscriber = subscriber;
+            });
+
+            expect(c.getDestructorsCount()).toBe(0);
+
+            c.managedSubscribe(observable, {
+                next() {
+                },
+                error(err) {
+                    fail(err);
+                }
+            });
+
+            expect(c.getDestructorsCount()).toBe(1);
+
+            outSubscriber!.next(1);
+            outSubscriber!.complete();
+
+            expect(c.getDestructorsCount()).toBe(0);
         });
     });
 });
