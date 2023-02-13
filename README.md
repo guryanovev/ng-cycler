@@ -2,6 +2,16 @@
 
 is a tiny helper for binding things to Angular component's lifetime (a period between `ngOnInit` and `ngOnDestroy`);
 
+```mermaid
+gantt
+    title An Angular Component
+    axisFormat %d
+    section Component
+    ngOnInit  :milestone, 2023-01-01, 0d
+    A lifetime           :a1, 2023-01-01, 9d
+    ngOnDestroy  :milestone, 2023-01-10, 0d
+```
+
 ## Why?
 
 When you develop Angular components you can often find yourself doing one thing over and over again -- connecting dependencies to component's lifetime. Usually it looks like this:
