@@ -161,4 +161,62 @@ describe('cycler', () => {
             expect(subscriptionSpy.unsubscribe).toBeCalledTimes(1);
         });
     });
+
+    describe('manage', () => {
+        it('should accept destructor', () => {
+            const c = new Cycler();
+
+            c.manage(NOOP);
+
+            expect(c.getDestructorsCount()).toBe(1);
+        });
+
+        it('should accept disposable', () => {
+            const c = new Cycler();
+
+            c.manage({
+                dispose() {
+                }
+            });
+
+            expect(c.getDestructorsCount()).toBe(1);
+        });
+
+        it('should accept subscription', () => {
+            const c = new Cycler();
+
+            c.manage({
+                unsubscribe() {
+                }
+            });
+
+            expect(c.getDestructorsCount()).toBe(1);
+        });
+
+        it('should return disposable', () => {
+            const c = new Cycler();
+
+            const disposable = c.manage(NOOP);
+
+            expect(disposable).toHaveProperty('dispose');
+        });
+    });
+
+    describe('manageAll', () => {
+        it('should accept multiple arguments', () => {
+            const c = new Cycler();
+
+            c.manageAll(
+                NOOP,
+                {
+                    dispose() {}
+                },
+                {
+                    unsubscribe() {}
+                }
+            );
+
+            expect(c.getDestructorsCount()).toBe(3);
+        });
+    });
 });
