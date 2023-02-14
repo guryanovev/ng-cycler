@@ -2,7 +2,7 @@
 
 ![ci build](https://github.com/guryanovev/ng-cycler/actions/workflows/ci.yml/badge.svg)
 
-Ng-Cycler is a tiny helper for binding things to Angular component's lifetime (a period between `ngOnInit` and `ngOnDestroy`);
+Ng-Cycler is a tiny helper for releasing resources that are bound to Angular component's lifetime (a period between `ngOnInit` and `ngOnDestroy`).
 
 ```mermaid
 gantt
@@ -18,7 +18,12 @@ gantt
 
 ## Why?
 
-When you develop Angular components you can often find yourself doing one thing over and over again -- connecting dependencies to component's lifetime. Usually it looks like this:
+It's important for Angular Components developer to make sure every resource (open connection, event bus subscription, http request) is finalized during the Component destroy phase. 
+
+> **Warning** 
+> In other words: whenever you subscribe to anything you need to unsubscribe in the end, do not rely on Angular. Even HTTP-Client cold observables should be unsubscribed.
+
+Because of that you can often find yourself doing one thing over and over again — manually connecting dependencies to component's lifetime. Usually it looks like this:
 
 ```typescript
 export class MyComponent implements OnInit, OnDestroy {
