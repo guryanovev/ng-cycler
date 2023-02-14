@@ -3,7 +3,7 @@ import { OnDestroy } from '@angular/core';
 import { Destructor } from './destructor.type';
 import { Observable, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { Unsubscribable } from 'rxjs';
+import { Unsubscribable, Observer } from 'rxjs';
 
 export class Cycler implements Disposable, OnDestroy {
     private _destructors: Destructor[] = [];
@@ -103,10 +103,36 @@ export class Cycler implements Disposable, OnDestroy {
         return this.manageDestructor(() => disposable.dispose());
     }
 
+    /**
+     * Adds a subscription to the disposal queue. The subscription will be
+     * finalized (by calling `unsubscribe` method) once the Cycler instance
+     * is disposed.
+     *
+     * @param {Unsubscribable} subscription to be added to the disposal queue.
+     *
+     * @returns {Disposable} disposable object that can be used to finalize
+     * the subscription manually.
+     */
     public manageSubscription(subscription: Unsubscribable): Disposable {
         return this.manageDestructor(() => subscription.unsubscribe());
     }
 
+    /**
+     * Adds a dependency to the disposal queue to be managed by the Cycler.
+     *
+     * The dependency could be one of the following:
+     *
+     *   * {@link Destructor} destructor - a callback will be invoked on dependency finalization;
+     *   * {@link Disposable} disposable - the `dispose` method will be called on dependency finalization;
+     *   * {@link Unsubscribable} subscription - the `unsubscribe` method will be called on dependency finalization;
+     *
+     * The dependency will be finalized on:
+     *
+     *   * the Cycler disposal by Angular;
+     *   * manually by calling `dispose` on the result object;
+     *
+     * @param dependency to be added to the finalization queue.
+     */
     public manage(dependency: Destructor | Disposable | Unsubscribable): Disposable {
         const disposable = dependency as Disposable;
         if (disposable.dispose !== undefined) {
@@ -121,43 +147,43 @@ export class Cycler implements Disposable, OnDestroy {
         return this.manageDestructor(dependency as Destructor);
     }
 
-    public manageTransient(code: string, destructor: Destructor): Disposable {
+    /**
+     * Adds multiple dependencies to the disposal queue.
+     *
+     * @param dependencies
+     */
+    public manageAll(...dependencies: (Destructor | Disposable | Unsubscribable)[]): void {
+        for (let i = 0; i < dependencies.length; i++) {
+            this.manage(dependencies[i]);
+        }
+    }
+
+    public manageTransient(code: string, dependency: Destructor | Disposable | Unsubscribable): Disposable {
         if (this._transientDestructors[code]) {
             this._transientDestructors[code].dispose();
         }
 
-        const result = this.manageDestructor(destructor);
+        const result = this.manage(dependency);
         this._transientDestructors[code] = result;
 
         return result;
     }
 
-    public manageTransientSubscription(code: string, subscription: Subscription) {
-        return this.manageTransient(code, () => {
-            subscription.unsubscribe();
-        });
-    }
-
-    public manageSubscriptions(...subscriptions: Subscription[]) {
-        for (const subscription of subscriptions) {
-            this.manageSubscription(subscription);
-        }
-    }
-
-    public managedSubscribe<T>(observable: Observable<T>, next: (value: T) => void) {
-        let destructor: Destructor | null = null;
+    public managedSubscribe<T>(observable: Observable<T>, observerOrNext?: Partial<Observer<T>> | ((value: T) => void)): Disposable {
+        let disposable: Disposable | null = null;
 
         const subscription = observable
             .pipe(
                 finalize(() => {
-                    if (destructor !== null) {
-                        this._destructors = this._destructors.filter(d => d !== destructor);
+                    if (disposable !== null) {
+                        disposable.dispose();
                     }
                 })
             )
-            .subscribe(next);
+            .subscribe(observerOrNext);
 
-        destructor = () => subscription.unsubscribe();
-        return this.manageDestructor(destructor);
+        disposable = this.manageSubscription(subscription);
+
+        return disposable;
     }
 }
