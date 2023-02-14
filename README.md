@@ -6,10 +6,12 @@ is a tiny helper for binding things to Angular component's lifetime (a period be
 gantt
     title An Angular Component
     axisFormat %d
+    section Angular Runtime
+    ngOnInit     :done, ngOnInit, 2023-01-01, 1d
+    ngOnDestroy  :done, ngOnDestroy, 2023-01-09, 1d
     section Component
-    ngOnInit  :milestone, 2023-01-01, 0d
-    A lifetime           :a1, 2023-01-01, 9d
-    ngOnDestroy  :milestone, 2023-01-10, 0d
+    A lifetime   :a1, 2023-01-02, 7d
+    
 ```
 
 ## Why?
@@ -74,7 +76,7 @@ npm install ng-cycler
 
 ### Option 1 (recommended for small projects, playgrounds etc.)
 
-Extend you component from the Cycler class:
+Make your Component extend the [Cycler](src/cycler.ts) class:
 
 ```typescript
 import { Cycler } from 'ng-cycler';
