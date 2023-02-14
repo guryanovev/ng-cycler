@@ -1,6 +1,8 @@
 # ng-cycler
 
-is a tiny helper for binding things to Angular component's lifetime (a period between `ngOnInit` and `ngOnDestroy`);
+![ci build](https://github.com/guryanovev/ng-cycler/actions/workflows/ci.yml/badge.svg)
+
+Ng-Cycler is a tiny helper for binding things to Angular component's lifetime (a period between `ngOnInit` and `ngOnDestroy`);
 
 ```mermaid
 gantt
@@ -39,9 +41,9 @@ export class MyComponent implements OnInit, OnDestroy {
 2. you dispose it in `ngOnDestroy`;
 3. you need a field to store some ref in the class;
 
-This code looks cumbersome once you repeat it many times for various dependencies.
+This code might look cumbersome once you copy/paste it many times for various dependencies.
 
-The objective of ng-cycler is to manage the dependency lifetime from one place by a single line of code:
+The objective of **ng-cycler** is to manage the dependency lifetime in just one place by a single line of code:
 
 ```typescript
 export class MyComponent implements OnInit, OnDestroy {
