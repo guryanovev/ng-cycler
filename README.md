@@ -125,3 +125,75 @@ export class MyComponent implements OnInit {
 ```
 
 3. Start using `Cycler` by calling `this.manage` or `this._cycler.manager` depending on the option you chose in the previous step.
+
+## API and Use-Cases
+
+### 1. `manage` method
+
+Use `manage` method to bind a Dependency to the entire component's lifetime, starting from `ngOnInit` up to `ngOnDestroy`.
+
+```mermaid
+gantt
+    title An Angular Component
+    axisFormat %d
+    
+    section Angular Runtime
+    ngOnInit     :done, ngOnInit, 2023-01-01, 1d
+    ngOnDestroy  :done, ngOnDestroy, 2023-01-09, 1d
+
+    section Component
+    A lifetime   :a1, 2023-01-02, 7d
+    
+    section Dependencies
+    Dep1   :active, d1, 2023-01-02, 7d
+    Dep2   :active, d1, 2023-01-02, 7d
+    Dep3   :active, d1, 2023-01-02, 7d
+```
+
+The Dependency could be a Subscription, a callback or a [Disposable](src/disposable.interface.ts) object:
+
+```typescript
+import { Subscription } from 'rxjs';
+import { Cycler } from 'ng-cycler';
+
+export class MyComponent implements OnInit {
+    ngOnInit() {
+        const sub: Subscription = this._myEventBus.subscribe(/* ... */);
+        
+        // The `sub` Subscription will be unsubscribed on destroy.
+        this._cycler.manage(sub);
+
+        this._cycler.manage(() => {
+            // This is a Callback, it will be
+            // invoked on Component destroy.
+        });
+        
+        this._cycler.manage({
+            // This is a Disposable object
+            dispose() {
+                // `dispose` method will be called on destroy.
+            }
+        });
+    }
+}
+```
+
+`manage` method returns a [Disposable](src/disposable.interface.ts) object that can be used to force destruction manually if it's needed for whatever reason.
+
+```typescript
+import { Subscription } from 'rxjs';
+import { Cycler } from 'ng-cycler';
+
+export class MyComponent implements OnInit {
+    ngOnInit() {
+        const sub: Subscription = this._myEventBus.subscribe(/* ... */);
+        
+        // The `sub` Subscription will be unsubscribed on destroy.
+        const dependency = this._cycler.manage(sub);
+        
+        // Calling `dispose` causes dependency destroy right away.
+        // In case of subscription it forces `unsubscribe`.
+        dependency.dispose();
+    }
+}
+```
