@@ -202,3 +202,28 @@ export class MyComponent implements OnInit {
     }
 }
 ```
+
+### 2. `manageAll` method
+
+`manageAll` is a shortcut to call `manage` for multiple dependencies:
+
+```typescript
+import { Subscription } from 'rxjs';
+import { Cycler } from 'ng-cycler';
+
+export class MyComponent implements OnInit {
+    ngOnInit() {
+        // We pass multiple Subscriptions to manageAll
+        // all of them will be unsubcsribed on Component destroy
+        const dependency = this._cycler.manageAll(
+            // Subscription 1
+            this._myEventBus.subscribe(/* ... */),
+            
+            // Subscription 2
+            this._myService1.subscribe(/* ... */),
+            
+            // Subscription 3
+            this._myService2.subscribe(/* ... */));
+    }
+}
+```
