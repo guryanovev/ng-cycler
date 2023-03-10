@@ -227,3 +227,63 @@ export class MyComponent implements OnInit {
     }
 }
 ```
+
+### 3. `manageTransient` method
+
+Use `manageTransient` if you have a repeated action producing Dependencies and you need to make sure the previous Dependency has been finalized before the next one starts. In other words you want to prevent Dependencies lifetime overlapping like this:
+
+```mermaid
+gantt
+    title An Angular Component
+    axisFormat %d
+    
+    section Angular Runtime
+    ngOnInit     :done, ngOnInit, 2023-01-01, 1d
+    ngOnDestroy  :done, ngOnDestroy, 2023-01-09, 1d
+
+    section Component
+    A lifetime   :a1, 2023-01-02, 7d
+    
+    section Dependencies
+    Dep1   :crit, d1, 2023-01-02, 4d
+    Dep2   :crit, d1, 2023-01-04, 3d
+    Dep3   :crit, d1, 2023-01-06, 3d
+```
+
+and turn it into this:
+
+```mermaid
+gantt
+    title An Angular Component
+    axisFormat %d
+    
+    section Angular Runtime
+    ngOnInit     :done, ngOnInit, 2023-01-01, 1d
+    ngOnDestroy  :done, ngOnDestroy, 2023-01-09, 1d
+
+    section Component
+    A lifetime   :a1, 2023-01-02, 7d
+    
+    section Dependencies
+    Dep1   :active, d1, 2023-01-02, 2d
+    Dep2   :active, d1, 2023-01-04, 2d
+    Dep3   :active, d1, 2023-01-06, 3d
+```
+
+First argument of `manageTransient` method is the unique string code to be used as Dependency type descriptor. Once `manageTransient` is called with the same `code` the previous Dependency will be finalized. In case of no additional calls the Dependency will be finalized `OnDestroy` just like for `manage` method.  
+
+```typescript
+import { Subscription } from 'rxjs';
+import { Cycler } from 'ng-cycler';
+
+export class MyComponent implements OnInit {
+    search(query: string) {
+        this._cycler.manageTransient(
+            // Another transient dependency (if there is any) with
+            // code 'search' will be finalized right away.
+            'search',
+            
+            this._myService.search(query).subscribe(/* ... */));
+    }
+}
+```
