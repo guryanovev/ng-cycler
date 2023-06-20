@@ -270,6 +270,8 @@ gantt
     Dep3   :active, d1, 2023-01-06, 3d
 ```
 
+In rxjs-world you would typically overcome this using methods like `switchMap`.
+
 First argument of `manageTransient` method is the unique string code to be used as Dependency type descriptor. Once `manageTransient` is called with the same `code` the previous Dependency will be finalized. In case of no additional calls the Dependency will be finalized `OnDestroy` just like for `manage` method.  
 
 ```typescript
