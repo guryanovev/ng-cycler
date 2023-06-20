@@ -2,7 +2,7 @@
 
 ![ci build](https://github.com/guryanovev/ng-cycler/actions/workflows/ci.yml/badge.svg)
 
-Ng-Cycler is a tiny helper for binding things to Angular component's lifetime (a period between `ngOnInit` and `ngOnDestroy`);
+Ng-Cycler is a tiny helper for releasing resources that are bound to Angular component's lifetime (a period between `ngOnInit` and `ngOnDestroy`).
 
 ```mermaid
 gantt
@@ -18,7 +18,12 @@ gantt
 
 ## Why?
 
-When you develop Angular components you can often find yourself doing one thing over and over again -- connecting dependencies to component's lifetime. Usually it looks like this:
+It's important for Angular Components developer to make sure every resource (open connection, event bus subscription, http request) is finalized during the Component destroy phase. 
+
+> **Warning** 
+> In other words: whenever you subscribe to anything you need to unsubscribe in the end, do not rely on Angular. Even HTTP-Client cold observables should be unsubscribed.
+
+Because of that you can often find yourself doing one thing over and over again — manually connecting dependencies to component's lifetime. Usually it looks like this:
 
 ```typescript
 export class MyComponent implements OnInit, OnDestroy {
@@ -194,6 +199,93 @@ export class MyComponent implements OnInit {
         // Calling `dispose` causes dependency destroy right away.
         // In case of subscription it forces `unsubscribe`.
         dependency.dispose();
+    }
+}
+```
+
+### 2. `manageAll` method
+
+`manageAll` is a shortcut to call `manage` for multiple dependencies:
+
+```typescript
+import { Subscription } from 'rxjs';
+import { Cycler } from 'ng-cycler';
+
+export class MyComponent implements OnInit {
+    ngOnInit() {
+        // We pass multiple Subscriptions to manageAll
+        // all of them will be unsubcsribed on Component destroy
+        const dependency = this._cycler.manageAll(
+            // Subscription 1
+            this._myEventBus.subscribe(/* ... */),
+            
+            // Subscription 2
+            this._myService1.subscribe(/* ... */),
+            
+            // Subscription 3
+            this._myService2.subscribe(/* ... */));
+    }
+}
+```
+
+### 3. `manageTransient` method
+
+Use `manageTransient` if you have a repeated action producing Dependencies and you need to make sure the previous Dependency has been finalized before the next one starts. In other words you want to prevent Dependencies lifetime overlapping like this:
+
+```mermaid
+gantt
+    title An Angular Component
+    axisFormat %d
+    
+    section Angular Runtime
+    ngOnInit     :done, ngOnInit, 2023-01-01, 1d
+    ngOnDestroy  :done, ngOnDestroy, 2023-01-09, 1d
+
+    section Component
+    A lifetime   :a1, 2023-01-02, 7d
+    
+    section Dependencies
+    Dep1   :crit, d1, 2023-01-02, 4d
+    Dep2   :crit, d1, 2023-01-04, 3d
+    Dep3   :crit, d1, 2023-01-06, 3d
+```
+
+and turn it into this:
+
+```mermaid
+gantt
+    title An Angular Component
+    axisFormat %d
+    
+    section Angular Runtime
+    ngOnInit     :done, ngOnInit, 2023-01-01, 1d
+    ngOnDestroy  :done, ngOnDestroy, 2023-01-09, 1d
+
+    section Component
+    A lifetime   :a1, 2023-01-02, 7d
+    
+    section Dependencies
+    Dep1   :active, d1, 2023-01-02, 2d
+    Dep2   :active, d1, 2023-01-04, 2d
+    Dep3   :active, d1, 2023-01-06, 3d
+```
+
+In rxjs-world you would typically overcome this using methods like `switchMap`.
+
+First argument of `manageTransient` method is the unique string code to be used as Dependency type descriptor. Once `manageTransient` is called with the same `code` the previous Dependency will be finalized. In case of no additional calls the Dependency will be finalized `OnDestroy` just like for `manage` method.  
+
+```typescript
+import { Subscription } from 'rxjs';
+import { Cycler } from 'ng-cycler';
+
+export class MyComponent implements OnInit {
+    search(query: string) {
+        this._cycler.manageTransient(
+            // Another transient dependency (if there is any) with
+            // code 'search' will be finalized right away.
+            'search',
+            
+            this._myService.search(query).subscribe(/* ... */));
     }
 }
 ```
