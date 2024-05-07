@@ -1,6 +1,6 @@
 {
   "name": "ng-cycler",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "A tiny Angular lifecycle helper library",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/guryanovev/ng-cycler#readme",
   "peerDependencies": {
-    "@angular/core": "6 - 16"
+    "@angular/core": "6 - 17"
   },
   "devDependencies": {
     "@angular/core": "15",
