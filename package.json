@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/guryanovev/ng-cycler#readme",
   "peerDependencies": {
-    "@angular/core": "6 - 20"
+    "@angular/core": "6 - 22"
   },
   "devDependencies": {
     "@angular/core": "15",
